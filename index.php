@@ -4,6 +4,8 @@ use \Psr\Http\Message\ResponseInterface as Response;
 
 require 'vendor/autoload.php';
 
+date_default_timezone_set('UTC');
+
 spl_autoload_register(function ($classname) {
 	require ('classes/' . $classname . '.php');
 });
@@ -21,35 +23,52 @@ $container['logger'] = function($c) {
 $app->get('/auth/ajax/check_auth', function ($request, $response, $args) {
 	$this->logger->addInfo('check_auth');
 
-	$ret = array(
-		'not_authorized' => 1,
-	);
+	$code = 401;
+	$data = array( 'not_authorized' => 1 );
+/*	$code = 200;
+	$data = array( 'name' => 'Test-User' );*/
 
-	$response->write(json_encode($ret));
+	$response = $response->withJson($data, $code);
+	return $response;
+});
+
+$app->get('/report/new/ajax', function ($request, $response, $args) {
+	$this->logger->addInfo('report/new');
+	$params = $request->getQueryParams();
+	$latitude = $params['latitude'];
+	$longitude = $params['longitude'];
+
+/*	$code = 200;
+ 	$data = array( 'error' => 'Kann halt nicht gefunden werden' );*/
+	$code = 200;
+	$data = array( 'foo' => 'Foo' );
+
+	$response = $response->withJson($data, $code);
 	return $response;
 });
 
 $app->get('/ajax/lookup_location', function ($request, $response, $args) {
 	$this->logger->addInfo('lookup_location');
-	$data = $request->getQueryParams();
-	$term = $data['term'];
+	$params = $request->getQueryParams();
+	$term = $params['term'];
 
-	$ret = array(
+	$code = 200;
+	$data = array(
 		'latitude' => 52.520645,
 		'longitude' => 13.409779,
 	);
-/*	$ret = array(
+	$data = array(
 		'suggestions' => array( 'Fernsehturm', 'Rotes Rathaus'),
 		'locations' => array(
 			array('lat' => 52.520645,'long' => 13.409779,'address' => 'Fernsehturm'),
 			array('lat' => 52.518611,'long' => 13.408333,'address' => 'Rotes Rathaus')
 		),
-	);*/
-/*	$ret = array(
+	);
+/*	$data = array(
 		'error' => 'Berlin nich jefunden',
 	);*/
 
-	$response->write(json_encode($ret));
+	$response = $response->withJson($data, $code);
 	return $response;
 });
 
