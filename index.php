@@ -143,7 +143,7 @@ function fetchRootConfig()
 	{
 //		$url_ref = 'https://ordnungsamt.berlin.de';
 		$ua = 'Mozilla/5.0 (Windows NT 5.1; rv:16.0) Gecko/20100101 Firefox/16.0 (FixMyStreet.Berlin robot)';
-		$cookiefile = 'cookiefile.txt';
+		$cookiefile = __DIR__ . '/cookiefile.txt';
 		$headers = array();
 		$headers[] = 'Content-Type: application/x-www-form-urlencoded';
 
@@ -213,15 +213,98 @@ function fetchRootConfig()
 
 	$responseText = curl_post( $url, $params);
 
-	echo("Got root config response: ". $responseText);
 	$array = json_decode($responseText, TRUE);
 	$security = json_decode($array['uidl'], TRUE);
 
-	echo('v-uiId: '. $array['v-uiId'].'<br>');
-	echo('Vaadin-Security-Key: '. $security['Vaadin-Security-Key'].'<br>');
+	$data = array( 'id' => $array['v-uiId'], 'key' => $security['Vaadin-Security-Key'], 'syncId' => $security['syncId'] );
+	return $data;
 }
 
-//fetchRootConfig();
+function fetchIssues($params)
+{
+	function curl_post_json( $url, $array)
+	{
+//		$url_ref = 'https://ordnungsamt.berlin.de';
+		$ua = 'Mozilla/5.0 (Windows NT 5.1; rv:16.0) Gecko/20100101 Firefox/16.0 (FixMyStreet.Berlin robot)';
+		$cookiefile = __DIR__ . '/cookiefile.txt';
+		$content = json_encode($array);
+		$headers = array();
+		$headers[] = 'Content-Type: application/json';
+
+		$ch = curl_init();
+		curl_setopt( $ch, CURLOPT_URL,            $url);
+//		curl_setopt( $ch, CURLOPT_REFERER,        $url_ref);
+		curl_setopt( $ch, CURLOPT_HEADER,         false);
+		curl_setopt( $ch, CURLOPT_USERAGENT,      $ua);
+		curl_setopt( $ch, CURLOPT_COOKIEFILE,     $cookiefile);
+		curl_setopt( $ch, CURLOPT_COOKIEJAR,      $cookiefile);
+//		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true);
+//		curl_setopt( $ch, CURLOPT_NOBODY,         false);
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true);
+//		curl_setopt( $ch, CURLOPT_BINARYTRANSFER, true);
+		curl_setopt( $ch, CURLOPT_HTTPHEADER,     $headers);
+		curl_setopt( $ch, CURLOPT_POST,           true);
+		curl_setopt( $ch, CURLOPT_POSTFIELDS,     $content);
+
+		$ret = curl_exec( $ch);
+		curl_close( $ch);
+
+		return $ret;
+	}
+
+	$url = 'https://ordnungsamt.berlin.de/frontend.mobile/UIDL/';
+	$url .= '?v-uiId=' . $params['id'];
+
+	$request = array(
+		csrfToken => $params['key'],
+		rpc => array(
+			0 => array(
+				0 => '31',
+				1 => 'com.vaadin.addon.touchkit.gwt.client.vcom.GeolocatorServerRpc',
+				2 => 'onGeolocationSuccess',
+				3 => array(
+					0 => 0,
+					1 => array(
+						accuracy => 45,
+						altitude => null,
+						altitudeAccuracy => null,
+						heading => null,
+						latitude => $params['latitude'],
+						longitude => $params['longitude'],
+						speed => null,
+					),
+				),
+			),
+		),
+		syncId => $params['syncId'],
+	);
+
+	$responseText = curl_post_json( $url, $request);
+	echo $responseText;
+
+	// for(;;);[{"syncId": 1, "changes" : [["change",{"pid":"0"},["0",{"id":"0"}]]], "state":{}, "types":{"0":"0"}, "hierarchy":{"0":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[1, 1]}]
+	// for(;;);[{"syncId": 1, "changes" : [["change",{"pid":"1"},["0",{"id":"1"}]]], "state":{}, "types":{"1":"0"}, "hierarchy":{"1":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[2, 1]}]
+	// for(;;);[{"syncId": 1, "changes" : [["change",{"pid":"2"},["0",{"id":"2"}]]], "state":{}, "types":{"2":"0"}, "hierarchy":{"2":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[4, 2]}]
+
+	$data = $params;
+
+	return $data;
+}
+
+$app->get('/test', function ($request, $response, $args) {
+	$this->logger->addInfo('test');
+	$params = $request->getQueryParams();
+
+	$code = 200;
+	$data = fetchRootConfig();
+	$data['latitude'] = /*$params['latitude']*/ 52.512499399999996;
+	$data['longitude'] = /*$params['longitude']*/ 13.485817899999999;
+
+	$data = fetchIssues($data);
+
+	$response = $response->withJson($data, $code);
+	return $response;
+});
 
 $app->run();
 ?>
