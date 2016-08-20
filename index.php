@@ -1214,9 +1214,46 @@ Meldungdatum            Details                           Status
 
 	$array = json_decode($responseText, TRUE);
 	$uidl = json_decode($array['uidl'], TRUE);
-	$changes = $uidl['changes'];
 
-	$data = array( 'id' => $array['v-uiId'], 'key' => $uidl['Vaadin-Security-Key'], 'syncId' => $uidl['syncId'], 'changes' => $changes );
+	$changes = $uidl['changes'];
+	echo "\n\n";
+	$creationDates = [];
+	foreach( $changes as $key => $value) {
+		if( (count($value) > 2) && (count($value[2]) > 2) && ($value[2][2][0] == 'rows') ) {
+			echo 'first row: ' .$value[2][1]['firstrow']."\n";
+			echo 'total rows: ' .$value[2][1]['totalrows']."\n";
+			echo 'page length: ' .$value[2][1]['pagelength']."\n";
+			foreach( $value[2][2] as $rowkey => $rowvalue) {
+				if( 'tr' == $rowvalue[0]) {
+					$creationDates[ $rowvalue[3][1]['id'] ] = $rowvalue[2];
+				}
+			}
+		}
+	}
+
+	$state = $uidl['state'];
+	echo "\n\n";
+	foreach( $state as $key => $value) {
+		if( 'button_betreff' == $value['id']) {
+			echo '> '.$value['caption']."\n";
+		} else if( 'label_ortsangabe' == $value['id']) {
+			echo '> '.$value['text']."\n";
+		} else if( 'label_status-datum' == $value['id']) {
+			echo '> '.$value['text']."\n\n";
+		} else if( 'ams-anliegenstatus-label' == $value['styles'][0]) {
+			echo '> '.$value['text']."\n";
+		} else if( 'ams-meldungSearchBild' == $value['styles'][0]) {
+//			echo '> '.$value['id']."\n";
+			echo '> '.$value['resources']['source']['uRL']."\n";
+		} else if( 'ams-anliegenstatus-image' == $value['styles'][0]) {
+			echo '> '.$value['resources']['source']['uRL']."\n";
+		} else if( strlen($creationDates[$key]) > 0) {
+			echo '> '.$creationDates[$key]."\n";
+			
+		}
+	}
+
+	$data = array( 'id' => $array['v-uiId'], 'key' => $uidl['Vaadin-Security-Key'], 'syncId' => $uidl['syncId']/*, 'changes' => $changes*/ );
 	return $data;
 }
 
