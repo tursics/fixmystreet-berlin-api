@@ -377,13 +377,16 @@ function fetchIssues($params)
 	);
 
 	$responseText = curl_post_json( $url, $request);
+	$responseText = str_replace('for(;;);', '', $responseText);
 	echo "\n\n".$responseText;
 
-	// for(;;);[{"syncId": 1, "changes" : [["change",{"pid":"0"},["0",{"id":"0"}]]], "state":{}, "types":{"0":"0"}, "hierarchy":{"0":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[1, 1]}]
-	// for(;;);[{"syncId": 1, "changes" : [["change",{"pid":"1"},["0",{"id":"1"}]]], "state":{}, "types":{"1":"0"}, "hierarchy":{"1":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[2, 1]}]
-	// for(;;);[{"syncId": 1, "changes" : [["change",{"pid":"2"},["0",{"id":"2"}]]], "state":{}, "types":{"2":"0"}, "hierarchy":{"2":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[4, 2]}]
+	$array = json_decode($responseText, TRUE);
 
-	$data = $params;
+	// [{"syncId": 1, "changes" : [["change",{"pid":"0"},["0",{"id":"0"}]]], "state":{}, "types":{"0":"0"}, "hierarchy":{"0":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[1, 1]}]
+	// [{"syncId": 1, "changes" : [["change",{"pid":"1"},["0",{"id":"1"}]]], "state":{}, "types":{"1":"0"}, "hierarchy":{"1":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[2, 1]}]
+	// [{"syncId": 1, "changes" : [["change",{"pid":"2"},["0",{"id":"2"}]]], "state":{}, "types":{"2":"0"}, "hierarchy":{"2":[]}, "rpc" : [], "meta" : {}, "resources" : {}, "timings":[4, 2]}]
+
+	$data = $array;
 
 	return $data;
 }
