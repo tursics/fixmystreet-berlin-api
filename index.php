@@ -218,6 +218,15 @@ function fetchRootConfig()
 		return curl_post( $url, $params);
 	}
 
+	function getMobileData2( $key, $syncId)
+	{
+		$url = 'https://ordnungsamt.berlin.de/frontend.mobile/UIDL/?v-uiId=0';
+
+		$params = '{"csrfToken":"161f3a22-d36f-4564-b7ef-47eb5c452e84","rpc":[["37","com.vaadin.addon.touchkit.gwt.client.vcom.GeolocatorServerRpc","onGeolocationSuccess",[0,{"accuracy":43,"altitude":0,"altitudeAccuracy":null,"heading":null,"latitude":52.512523200000004,"longitude":13.4857274,"speed":null}]]],"syncId":5}';
+
+		return curl_post( $url, $params);
+	}
+
 	function getDesktopData()
 	{
 		$url = 'https://ordnungsamt.berlin.de/frontend/dynamic?redirect-mobile=ignore&v-1471285022940';
@@ -255,6 +264,13 @@ echo "\n\n".$responseText;
 		$uidl = json_decode($array['uidl'], TRUE);
 
 		$changes = $uidl['changes'];
+
+		$data = array( 'id' => $array['v-uiId'], 'key' => $uidl['Vaadin-Security-Key'], 'syncId' => $uidl['syncId']);
+
+		$responseText = getMobileData2( $data['key'], $data['syncId']);
+echo "\n\n".$responseText;
+
+		return $data;
 	}
 
 	function analyseDesktopData()
@@ -303,7 +319,7 @@ echo "\n\n".$responseText;
 	}
 
 	// VERSION 1: Use the mobile interface
-	analyseMobileData();
+	return analyseMobileData();
 
 	// VERSION 2: Use the desktop interface
 //	analyseDesktopData();
